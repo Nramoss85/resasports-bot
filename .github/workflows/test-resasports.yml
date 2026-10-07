@@ -34,7 +34,7 @@ jobs:
           bot.login(
               os.environ["RESASPORTS_EMAIL"],
               os.environ["RESASPORTS_PASSWORD"],
-              "CEM CAN CAMP"
+              "cem-can-camp"
           )
 
           print("LOGIN CORRECTO")
