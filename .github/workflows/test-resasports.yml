@@ -1,0 +1,43 @@
+name: Test Resasports
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install PySportBot
+        run: pip install pysportbot
+
+      - name: Test login and centre
+        env:
+          RESASPORTS_EMAIL: ${{ secrets.RESASPORTS_EMAIL }}
+          RESASPORTS_PASSWORD: ${{ secrets.RESASPORTS_PASSWORD }}
+        run: |
+          python - <<'PY'
+          import os
+          from pysportbot import SportBot
+
+          bot = SportBot(
+              log_level="INFO",
+              print_centres=True,
+              time_zone="Europe/Madrid"
+          )
+
+          bot.login(
+              os.environ["RESASPORTS_EMAIL"],
+              os.environ["RESASPORTS_PASSWORD"],
+              "CEM CAN CAMP"
+          )
+
+          print("LOGIN CORRECTO")
+          print("ACTIVIDADES DISPONIBLES:")
+          bot.activities(limit=30)
+          PY
