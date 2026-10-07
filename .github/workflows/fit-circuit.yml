@@ -1,0 +1,56 @@
+name: Reserva FIT CIRCUIT
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 08/10/2026 a las 11:20 en Madrid = 09:20 UTC
+    - cron: '20 9 8 10 *'
+
+jobs:
+  book:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install PySportBot
+        run: pip install pysportbot
+
+      - name: Create booking configuration
+        env:
+          RESASPORTS_EMAIL: ${{ secrets.RESASPORTS_EMAIL }}
+          RESASPORTS_PASSWORD: ${{ secrets.RESASPORTS_PASSWORD }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          config = {
+              "email": os.environ["RESASPORTS_EMAIL"],
+              "password": os.environ["RESASPORTS_PASSWORD"],
+              "center": "CEM CAN CAMP",
+              "booking_execution": "Thursday 11:30:00",
+              "classes": [
+                  {
+                      "activity": "FIT CIRCUIT",
+                      "class_day": "Saturday",
+                      "class_time": "11:30:00"
+                  }
+              ]
+          }
+
+          with open("config.json", "w") as f:
+              json.dump(config, f)
+          PY
+
+      - name: Book FIT CIRCUIT
+        run: |
+          python -m pysportbot.service \
+            --config config.json \
+            --time-zone Europe/Madrid \
+            --log-level INFO \
+            --retry-attempts 5 \
+            --retry-delay 3
