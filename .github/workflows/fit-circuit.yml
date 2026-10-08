@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   schedule:
     # 08/10/2026 a las 11:20 en Madrid = 09:20 UTC
-    - cron: '20 9 8 10 *'
+    - cron: '20 9 * * 4'
 
 jobs:
   book:
