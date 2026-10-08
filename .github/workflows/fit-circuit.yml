@@ -31,7 +31,7 @@ jobs:
           config = {
               "email": os.environ["RESASPORTS_EMAIL"],
               "password": os.environ["RESASPORTS_PASSWORD"],
-              "center": "CEM CAN CAMP",
+            "centre": "cem-can-camp",
               "booking_execution": "Thursday 11:30:00",
               "classes": [
                   {
