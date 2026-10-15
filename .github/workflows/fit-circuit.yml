@@ -32,7 +32,7 @@ jobs:
               "email": os.environ["RESASPORTS_EMAIL"],
               "password": os.environ["RESASPORTS_PASSWORD"],
             "centre": "cem-can-camp",
-              "booking_execution": "now",
+              "booking_execution": "Thursday 11:30:00",
               "classes": [
                   {
                       "activity": "FIT CIRCUIT",
