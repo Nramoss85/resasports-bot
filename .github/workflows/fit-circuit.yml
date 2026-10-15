@@ -1,27 +1,45 @@
+
 name: Reserva FIT CIRCUIT
 
 on:
   workflow_dispatch:
   schedule:
-    # 08/10/2026 a las 11:20 en Madrid = 09:20 UTC
-      schedule:
+    # Jueves, horario de verano e invierno (UTC)
     - cron: '20 9 * * 4'
-      timezone: 'Europe/Madrid'
+    - cron: '20 10 * * 4'
 
 jobs:
   book:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
 
     steps:
+      - name: Check Madrid local time
+        id: madrid
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "run_booking=true" >> "$GITHUB_OUTPUT"
+          elif [ "$(TZ=Europe/Madrid date +%u-%H:%M)" = "4-11:20" ]; then
+            echo "run_booking=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_booking=false" >> "$GITHUB_OUTPUT"
+            echo "Not the correct Madrid booking time. Skipping."
+          fi
+
       - name: Set up Python
-        uses: actions/setup-python@v7
+        if: steps.madrid.outputs.run_booking == 'true'
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Install PySportBot
+        if: steps.madrid.outputs.run_booking == 'true'
         run: pip install pysportbot
 
       - name: Create booking configuration
+        if: steps.madrid.outputs.run_booking == 'true'
         env:
           RESASPORTS_EMAIL: ${{ secrets.RESASPORTS_EMAIL }}
           RESASPORTS_PASSWORD: ${{ secrets.RESASPORTS_PASSWORD }}
@@ -33,7 +51,7 @@ jobs:
           config = {
               "email": os.environ["RESASPORTS_EMAIL"],
               "password": os.environ["RESASPORTS_PASSWORD"],
-            "centre": "cem-can-camp",
+              "centre": "cem-can-camp",
               "booking_execution": "Thursday 11:30:00",
               "classes": [
                   {
@@ -49,6 +67,7 @@ jobs:
           PY
 
       - name: Book FIT CIRCUIT
+        if: steps.madrid.outputs.run_booking == 'true'
         run: |
           python -m pysportbot.service \
             --config config.json \
