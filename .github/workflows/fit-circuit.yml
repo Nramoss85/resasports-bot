@@ -21,7 +21,7 @@ jobs:
         run: |
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             echo "run_booking=true" >> "$GITHUB_OUTPUT"
-          elif [ "$(TZ=Europe/Madrid date +%u-%H:%M)" = "4-11:20" ]; then
+          elif [ "$(TZ=Europe/Madrid date +%u-%H)" = "4-11" ]; then
             echo "run_booking=true" >> "$GITHUB_OUTPUT"
           else
             echo "run_booking=false" >> "$GITHUB_OUTPUT"
