@@ -1,0 +1,77 @@
+
+name: Reserva BOOMPA
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Domingo: verano e invierno (UTC)
+    - cron: '20 15 * * 0'
+    - cron: '20 16 * * 0'
+
+jobs:
+  book:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Check Madrid local time
+        id: madrid
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "run_booking=true" >> "$GITHUB_OUTPUT"
+          elif [ "$(TZ=Europe/Madrid date +%u-%H)" = "7-17" ]; then
+            echo "run_booking=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_booking=false" >> "$GITHUB_OUTPUT"
+            echo "Outside the booking window. Skipping."
+          fi
+
+      - name: Set up Python
+        if: steps.madrid.outputs.run_booking == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PySportBot
+        if: steps.madrid.outputs.run_booking == 'true'
+        run: pip install pysportbot
+
+      - name: Create booking configuration
+        if: steps.madrid.outputs.run_booking == 'true'
+        env:
+          RESASPORTS_EMAIL: ${{ secrets.RESASPORTS_EMAIL }}
+          RESASPORTS_PASSWORD: ${{ secrets.RESASPORTS_PASSWORD }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          config = {
+              "email": os.environ["RESASPORTS_EMAIL"],
+              "password": os.environ["RESASPORTS_PASSWORD"],
+              "centre": "cem-can-camp",
+              "booking_execution": "Sunday 17:30:00",
+              "classes": [
+                  {
+                      "activity": "BOOMPA",
+                      "class_day": "Tuesday",
+                      "class_time": "17:30:00"
+                  }
+              ]
+          }
+
+          with open("config.json", "w") as f:
+              json.dump(config, f)
+          PY
+
+      - name: Book BOOMPA
+        if: steps.madrid.outputs.run_booking == 'true'
+        run: |
+          python -m pysportbot.service \
+            --config config.json \
+            --time-zone Europe/Madrid \
+            --log-level INFO \
+            --retry-attempts 5 \
+            --retry-delay 3
